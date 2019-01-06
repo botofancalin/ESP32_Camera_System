@@ -16,7 +16,7 @@ The projects can be compiled using PlatformIO
 
 - The camera stream can be accessed from PC web browser
 - The feame rate is up to 25fps on the browser, depending on the camera settings
- On esp32 tft, the fps is much lower due to SPI TFT limitations
- From the browser you can dinamically set various camera settings and parameters: 
++ On esp32 tft, the fps is much lower due to SPI TFT limitations
++ From the browser you can dinamically set various camera settings and parameters: 
 
 ![image](ESP32_Camera_Sender/lib/esp32_camera_stream.png)
