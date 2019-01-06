@@ -16,73 +16,128 @@
 #include "WROVER_KIT_LCD.h"
 #include "pins_arduino.h"
 
-#define WROVER_MISO             19
-#define WROVER_MOSI             23
-#define WROVER_SCLK             18
-#define WROVER_CS               5
-#define WROVER_DC               21
-#define WROVER_RST              -1
-#define WROVER_BL               27
+#ifdef M5STACK
 
-#define WROVER_BL_OFF           LOW
-#define WROVER_BL_ON            HIGH
+#define WROVER_MISO 19
+#define WROVER_MOSI 23
+#define WROVER_SCLK 18
+#define WROVER_CS 14
+#define WROVER_DC 27
+#define WROVER_RST 33
+#define WROVER_BL 32
 
-#define WROVER_DC_HIGH()           GPIO.out_w1ts = (1 << WROVER_DC)
-#define WROVER_DC_LOW()            GPIO.out_w1tc = (1 << WROVER_DC)
-#define WROVER_CS_HIGH()           GPIO.out_w1ts = (1 << WROVER_CS)
-#define WROVER_CS_LOW()            GPIO.out_w1tc = (1 << WROVER_CS)
+#define WROVER_BL_OFF LOW
+#define WROVER_BL_ON HIGH
+#define WROVER_DEFAULT_FREQ 78000000
 
-#define WROVER_DEFAULT_FREQ        78000000
-#define WROVER_MAX_PIXELS_AT_ONCE  32
+#elif defined WROVER_KIT
 
-#define WROVER_MADCTL_MY  0x80
-#define WROVER_MADCTL_MX  0x40
-#define WROVER_MADCTL_MV  0x20
-#define WROVER_MADCTL_ML  0x10
+#define WROVER_MISO 25
+#define WROVER_MOSI 23
+#define WROVER_SCLK 19
+#define WROVER_CS 22
+#define WROVER_DC 21
+#define WROVER_RST 18
+#define WROVER_BL 5
+
+#define WROVER_BL_OFF LOW
+#define WROVER_BL_ON HIGH
+#define WROVER_DEFAULT_FREQ 40000000
+
+#elif defined ODROID_GO
+
+#define WROVER_MISO 19
+#define WROVER_MOSI 23
+#define WROVER_SCLK 18
+#define WROVER_CS 5
+#define WROVER_DC 21
+#define WROVER_RST -1
+#define WROVER_BL 14
+
+#define WROVER_BL_OFF LOW
+#define WROVER_BL_ON HIGH
+#define WROVER_DEFAULT_FREQ 40000000
+
+#elif defined MYDEV
+
+#define WROVER_MISO 19
+#define WROVER_MOSI 23
+#define WROVER_SCLK 18
+#define WROVER_CS 5
+#define WROVER_DC 21
+#define WROVER_RST -1
+#define WROVER_BL 27
+
+#define WROVER_BL_OFF LOW
+#define WROVER_BL_ON HIGH
+#define WROVER_DEFAULT_FREQ 78000000
+#endif
+
+#define WROVER_DC_HIGH() GPIO.out_w1ts = (1 << WROVER_DC)
+#define WROVER_DC_LOW() GPIO.out_w1tc = (1 << WROVER_DC)
+#define WROVER_CS_HIGH() GPIO.out_w1ts = (1 << WROVER_CS)
+#define WROVER_CS_LOW() GPIO.out_w1tc = (1 << WROVER_CS)
+
+#define WROVER_MAX_PIXELS_AT_ONCE 32
+
+#define WROVER_MADCTL_MY 0x80
+#define WROVER_MADCTL_MX 0x40
+#define WROVER_MADCTL_MV 0x20
+#define WROVER_MADCTL_ML 0x10
 #define WROVER_MADCTL_BGR 0x08
-#define WROVER_MADCTL_MH  0x04
+#define WROVER_MADCTL_MH 0x04
 
 const uint8_t ili9341_init_data[] = {
-    0xEF, 3, 0x03,0x80,0x02,
-    0xCF, 3, 0x00,0XC1,0X30,
-    0xED, 4, 0x64,0x03,0X12,0X81,
-    0xE8, 3, 0x85,0x00,0x78,
-    0xCB, 5, 0x39,0x2C,0x00,0x34,0x02,
+    0xEF, 3, 0x03, 0x80, 0x02,
+    0xCF, 3, 0x00, 0XC1, 0X30,
+    0xED, 4, 0x64, 0x03, 0X12, 0X81,
+    0xE8, 3, 0x85, 0x00, 0x78,
+    0xCB, 5, 0x39, 0x2C, 0x00, 0x34, 0x02,
     0xF7, 1, 0x20,
-    0xEA, 2, 0x00,0x00,
+    0xEA, 2, 0x00, 0x00,
     0xC0, 1, 0x23,
     0xC1, 1, 0x10,
-    0xC5, 2, 0x3e,0x28,
+    0xC5, 2, 0x3e, 0x28,
     0xC7, 1, 0x86,
-    0x36, 1, 0x48,
+    0x36, 1,
+#ifdef M5STACK
+    0x08,
+#else
+    0x48,
+#endif
     0x3A, 1, 0x55,
-    0xB1, 2, 0x00,0x18,
-    0xB6, 3, 0x08,0x82,0x27,
+    0xB1, 2, 0x00, 0x18,
+    0xB6, 3, 0x08, 0x82, 0x27,
     0xF2, 1, 0x00,
     0x26, 1, 0x01,
-    0xE0, 15, 0x0F,0x31,0x2B,0x0C,0x0E,0x08,0x4E,0xF1,0x37,0x07,0x10,0x03,0x0E,0x09,0x00,
-    0xE1, 15, 0x00,0x0E,0x14,0x03,0x11,0x07,0x31,0xC1,0x48,0x08,0x0F,0x0C,0x31,0x36,0x0F,
-    0x00
-};
+    0xE0, 15, 0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00,
+    0xE1, 15, 0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F,
+    0x00};
 
-void  WROVER_KIT_LCD::writeInitData(const uint8_t * data){
+void WROVER_KIT_LCD::writeInitData(const uint8_t *data)
+{
     uint8_t cmd, len, i;
-    while(true){
+    while (true)
+    {
         cmd = *data++;
-        if(!cmd){ //END
+        if (!cmd)
+        { //END
             return;
         }
         len = *data++;
         writeCommand(cmd);
-        for(i=0;i<len;i++){
+        for (i = 0; i < len; i++)
+        {
             SPI.write(*data++);
         }
     }
 }
 
-uint32_t WROVER_KIT_LCD::readId() {
+uint32_t WROVER_KIT_LCD::readId()
+{
     uint32_t freq = _freq;
-    if(_freq > 24000000){
+    if (_freq > 24000000)
+    {
         _freq = 24000000;
     }
     startWrite();
@@ -98,33 +153,39 @@ uint32_t WROVER_KIT_LCD::readId() {
 }
 
 // Pass 8-bit (each) R,G,B, get back 16-bit packed color
-uint16_t WROVER_KIT_LCD::color565(uint8_t r, uint8_t g, uint8_t b) {
+uint16_t WROVER_KIT_LCD::color565(uint8_t r, uint8_t g, uint8_t b)
+{
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3);
 }
 
-WROVER_KIT_LCD::WROVER_KIT_LCD() : Adafruit_GFX(WROVER_WIDTH, WROVER_HEIGHT) {
-    _id   = 0;
+WROVER_KIT_LCD::WROVER_KIT_LCD() : Adafruit_GFX(WROVER_WIDTH, WROVER_HEIGHT)
+{
+    _id = 0;
     _freq = WROVER_DEFAULT_FREQ;
 }
 
-void WROVER_KIT_LCD::startWrite(void){
+void WROVER_KIT_LCD::startWrite(void)
+{
     SPI.beginTransaction(SPISettings(_freq, MSBFIRST, SPI_MODE0));
     WROVER_CS_LOW();
 }
 
-void WROVER_KIT_LCD::endWrite(void){
+void WROVER_KIT_LCD::endWrite(void)
+{
     WROVER_CS_HIGH();
     SPI.endTransaction();
 }
 
-void WROVER_KIT_LCD::writeCommand(uint8_t cmd){
+void WROVER_KIT_LCD::writeCommand(uint8_t cmd)
+{
     WROVER_DC_LOW();
     SPI.write(cmd);
     WROVER_DC_HIGH();
 }
 
-void WROVER_KIT_LCD::begin(){
-    _width  = WROVER_WIDTH;
+void WROVER_KIT_LCD::begin()
+{
+    _width = WROVER_WIDTH;
     _height = WROVER_HEIGHT;
 
     pinMode(WROVER_DC, OUTPUT);
@@ -160,26 +221,34 @@ void WROVER_KIT_LCD::begin(){
     digitalWrite(WROVER_BL, WROVER_BL_ON);
 }
 
-typedef struct {
-        uint8_t madctl;
-        uint8_t bmpctl;
-        uint16_t width;
-        uint16_t height;
+typedef struct
+{
+    uint8_t madctl;
+    uint8_t bmpctl;
+    uint16_t width;
+    uint16_t height;
 } rotation_data_t;
 
+#ifdef M5STACK
 const rotation_data_t ili9341_rotations[4] = {
-    {(WROVER_MADCTL_MX|WROVER_MADCTL_BGR),(WROVER_MADCTL_MX|WROVER_MADCTL_MY|WROVER_MADCTL_BGR),WROVER_WIDTH,WROVER_HEIGHT},
-    {(WROVER_MADCTL_MV|WROVER_MADCTL_BGR),(WROVER_MADCTL_MV|WROVER_MADCTL_MX|WROVER_MADCTL_BGR),WROVER_HEIGHT,WROVER_WIDTH},
-    {(WROVER_MADCTL_MY|WROVER_MADCTL_BGR),(WROVER_MADCTL_BGR),WROVER_WIDTH,WROVER_HEIGHT},
-    {(WROVER_MADCTL_MX|WROVER_MADCTL_MY|WROVER_MADCTL_MV|WROVER_MADCTL_BGR),(WROVER_MADCTL_MY|WROVER_MADCTL_MV|WROVER_MADCTL_BGR),WROVER_HEIGHT,WROVER_WIDTH}
-};
+    {(WROVER_MADCTL_MX | WROVER_MADCTL_BGR), (WROVER_MADCTL_MX | WROVER_MADCTL_MY | WROVER_MADCTL_BGR), WROVER_HEIGHT, WROVER_WIDTH},
+    {(WROVER_MADCTL_MV | WROVER_MADCTL_BGR), (WROVER_MADCTL_MV | WROVER_MADCTL_MX | WROVER_MADCTL_BGR), WROVER_WIDTH, WROVER_HEIGHT},
+    {(WROVER_MADCTL_MY | WROVER_MADCTL_BGR), (WROVER_MADCTL_BGR), WROVER_WIDTH, WROVER_HEIGHT},
+    {(WROVER_MADCTL_MX | WROVER_MADCTL_MY | WROVER_MADCTL_MV | WROVER_MADCTL_BGR), (WROVER_MADCTL_MY | WROVER_MADCTL_MV | WROVER_MADCTL_BGR), WROVER_HEIGHT, WROVER_WIDTH}};
+#else
+const rotation_data_t ili9341_rotations[4] = {
+    {(WROVER_MADCTL_MX | WROVER_MADCTL_BGR), (WROVER_MADCTL_MX | WROVER_MADCTL_MY | WROVER_MADCTL_BGR), WROVER_WIDTH, WROVER_HEIGHT},
+    {(WROVER_MADCTL_MV | WROVER_MADCTL_BGR), (WROVER_MADCTL_MV | WROVER_MADCTL_MX | WROVER_MADCTL_BGR), WROVER_HEIGHT, WROVER_WIDTH},
+    {(WROVER_MADCTL_MY | WROVER_MADCTL_BGR), (WROVER_MADCTL_BGR), WROVER_WIDTH, WROVER_HEIGHT},
+    {(WROVER_MADCTL_MX | WROVER_MADCTL_MY | WROVER_MADCTL_MV | WROVER_MADCTL_BGR), (WROVER_MADCTL_MY | WROVER_MADCTL_MV | WROVER_MADCTL_BGR), WROVER_HEIGHT, WROVER_WIDTH}};
+#endif
 
-void WROVER_KIT_LCD::setRotation(uint8_t m) {
+void WROVER_KIT_LCD::setRotation(uint8_t m)
+{
     rotation = m % 4; // can't be higher than 3
 
-
     m = ili9341_rotations[rotation].madctl;
-    _width  = ili9341_rotations[rotation].width;
+    _width = ili9341_rotations[rotation].width;
     _height = ili9341_rotations[rotation].height;
 
     startWrite();
@@ -188,38 +257,42 @@ void WROVER_KIT_LCD::setRotation(uint8_t m) {
     endWrite();
 }
 
-void WROVER_KIT_LCD::invertDisplay(boolean i) {
+void WROVER_KIT_LCD::invertDisplay(boolean i)
+{
     startWrite();
     writeCommand(i ? WROVER_INVON : WROVER_INVOFF);
     endWrite();
 }
 
-void WROVER_KIT_LCD::scrollTo(uint16_t y) {
+void WROVER_KIT_LCD::scrollTo(uint16_t y)
+{
     startWrite();
     writeCommand(WROVER_VSCRSADD);
     SPI.write16(y);
     endWrite();
 }
 
-void WROVER_KIT_LCD::setupScrollArea(uint16_t tfa, uint16_t bfa) {
-  startWrite();
-  writeCommand(WROVER_VSCRDEF); // Vertical scroll definition
-  SPI.write(tfa >> 8);
-  SPI.write(tfa);
-  SPI.write((WROVER_HEIGHT - tfa - bfa) >> 8);
-  SPI.write(WROVER_HEIGHT - tfa - bfa);
-  SPI.write(bfa >> 8);
-  SPI.write(bfa);
-  endWrite();
+void WROVER_KIT_LCD::setupScrollArea(uint16_t tfa, uint16_t bfa)
+{
+    startWrite();
+    writeCommand(WROVER_VSCRDEF); // Vertical scroll definition
+    SPI.write(tfa >> 8);
+    SPI.write(tfa);
+    SPI.write((WROVER_HEIGHT - tfa - bfa) >> 8);
+    SPI.write(WROVER_HEIGHT - tfa - bfa);
+    SPI.write(bfa >> 8);
+    SPI.write(bfa);
+    endWrite();
 }
 
 /*
  * Transaction API
  * */
 
-void WROVER_KIT_LCD::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
-    uint32_t xa = ((uint32_t)x << 16) | (x+w-1);
-    uint32_t ya = ((uint32_t)y << 16) | (y+h-1);
+void WROVER_KIT_LCD::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+    uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
+    uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
     writeCommand(WROVER_CASET);
     SPI.write32(xa);
     writeCommand(WROVER_RASET);
@@ -227,7 +300,8 @@ void WROVER_KIT_LCD::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t 
     writeCommand(WROVER_RAMWR);
 }
 
-void WROVER_KIT_LCD::startBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+void WROVER_KIT_LCD::startBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
     startWrite();
     writeCommand(WROVER_MADCTL);
     SPI.write(ili9341_rotations[rotation].bmpctl);
@@ -236,7 +310,8 @@ void WROVER_KIT_LCD::startBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
     setAddrWindow(x, _height - y - h, w, h);
 }
 
-void WROVER_KIT_LCD::endBitmap() {
+void WROVER_KIT_LCD::endBitmap()
+{
     endWrite();
     startWrite();
     writeCommand(WROVER_MADCTL);
@@ -244,82 +319,101 @@ void WROVER_KIT_LCD::endBitmap() {
     endWrite();
 }
 
-void WROVER_KIT_LCD::pushColor(uint16_t color) {
+void WROVER_KIT_LCD::pushColor(uint16_t color)
+{
     startWrite();
     SPI.write16(color);
     endWrite();
 }
 
-void WROVER_KIT_LCD::writePixel(uint16_t color){
+void WROVER_KIT_LCD::writePixel(uint16_t color)
+{
     SPI.write16(color);
 }
 
-void WROVER_KIT_LCD::writePixels(uint16_t * colors, uint32_t len){
-    SPI.writePixels((uint8_t*)colors , len * 2);
+void WROVER_KIT_LCD::writePixels(uint16_t *colors, uint32_t len)
+{
+    SPI.writePixels((uint8_t *)colors, len * 2);
 }
 
-void WROVER_KIT_LCD::writeColor(uint16_t color, uint32_t len){
+void WROVER_KIT_LCD::writeColor(uint16_t color, uint32_t len)
+{
     static uint16_t temp[WROVER_MAX_PIXELS_AT_ONCE];
-    size_t blen = (len > WROVER_MAX_PIXELS_AT_ONCE)?WROVER_MAX_PIXELS_AT_ONCE:len;
+    size_t blen = (len > WROVER_MAX_PIXELS_AT_ONCE) ? WROVER_MAX_PIXELS_AT_ONCE : len;
     uint16_t tlen = 0;
 
-    for (uint32_t t=0; t<blen; t++){
+    for (uint32_t t = 0; t < blen; t++)
+    {
         temp[t] = color;
     }
 
-    while(len){
-        tlen = (len>blen)?blen:len;
+    while (len)
+    {
+        tlen = (len > blen) ? blen : len;
         writePixels(temp, tlen);
         len -= tlen;
     }
 }
 
-void WROVER_KIT_LCD::writePixel(int16_t x, int16_t y, uint16_t color) {
-    if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
-    setAddrWindow(x,y,1,1);
+void WROVER_KIT_LCD::writePixel(int16_t x, int16_t y, uint16_t color)
+{
+    if ((x < 0) || (x >= _width) || (y < 0) || (y >= _height))
+        return;
+    setAddrWindow(x, y, 1, 1);
     writePixel(color);
 }
 
-void WROVER_KIT_LCD::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color){
-    if((x >= _width) || (y >= _height)) return;
+void WROVER_KIT_LCD::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+{
+    if ((x >= _width) || (y >= _height))
+        return;
 
     int16_t x2 = x + w - 1, y2 = y + h - 1;
-    if((x2 < 0) || (y2 < 0)) return;
+    if ((x2 < 0) || (y2 < 0))
+        return;
 
     // Clip left/top
-    if(x < 0) {
+    if (x < 0)
+    {
         x = 0;
         w = x2 + 1;
     }
-    if(y < 0) {
+    if (y < 0)
+    {
         y = 0;
         h = y2 + 1;
     }
 
     // Clip right/bottom
-    if(x2 >= _width)  w = _width  - x;
-    if(y2 >= _height) h = _height - y;
+    if (x2 >= _width)
+        w = _width - x;
+    if (y2 >= _height)
+        h = _height - y;
 
     int32_t len = (int32_t)w * h;
     setAddrWindow(x, y, w, h);
     writeColor(color, len);
 }
 
-void WROVER_KIT_LCD::writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color){
+void WROVER_KIT_LCD::writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
+{
     writeFillRect(x, y, 1, h, color);
 }
 
-void WROVER_KIT_LCD::writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color){
+void WROVER_KIT_LCD::writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
+{
     writeFillRect(x, y, w, 1, color);
 }
 
-uint8_t WROVER_KIT_LCD::readcommand8(uint8_t c, uint8_t index) {
+uint8_t WROVER_KIT_LCD::readcommand8(uint8_t c, uint8_t index)
+{
     uint32_t freq = _freq;
-    if(_freq > 24000000){
+    if (_freq > 24000000)
+    {
         _freq = 24000000;
     }
     startWrite();
-    writeCommand(0xD9);  // woo sekret command?
+    writeCommand(0xD9); // woo sekret command?
     SPI.write(0x10 + index);
     writeCommand(c);
     uint8_t r = SPI.transfer(0);
@@ -328,100 +422,120 @@ uint8_t WROVER_KIT_LCD::readcommand8(uint8_t c, uint8_t index) {
     return r;
 }
 
-void WROVER_KIT_LCD::drawPixel(int16_t x, int16_t y, uint16_t color){
+void WROVER_KIT_LCD::drawPixel(int16_t x, int16_t y, uint16_t color)
+{
     startWrite();
     writePixel(x, y, color);
     endWrite();
 }
 
 void WROVER_KIT_LCD::drawFastVLine(int16_t x, int16_t y,
-        int16_t h, uint16_t color) {
+                                   int16_t h, uint16_t color)
+{
     startWrite();
     writeFastVLine(x, y, h, color);
     endWrite();
 }
 
 void WROVER_KIT_LCD::drawFastHLine(int16_t x, int16_t y,
-        int16_t w, uint16_t color) {
+                                   int16_t w, uint16_t color)
+{
     startWrite();
     writeFastHLine(x, y, w, color);
     endWrite();
 }
 
 void WROVER_KIT_LCD::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
-        uint16_t color) {
+                              uint16_t color)
+{
     startWrite();
-    writeFillRect(x,y,w,h,color);
+    writeFillRect(x, y, w, h, color);
     endWrite();
 }
 
 // This code was ported/adapted from https://github.com/PaulStoffregen/ILI9341_t3
-void WROVER_KIT_LCD::drawBitmap(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors) {
+void WROVER_KIT_LCD::drawBitmap(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors)
+{
     startWrite();
     setAddrWindow(x, y, w, h);
-    writePixels((uint16_t*) pcolors, w*h);
+    writePixels((uint16_t *)pcolors, w * h);
     endWrite();
 }
-
 
 /*
  * Bitmaps and JPEGs
  * */
 
-
 /*
  * BMP
  * */
 
-#define bmpRead32(d,o) (d[o] | (uint16_t)(d[(o)+1]) << 8 | (uint32_t)(d[(o)+2]) << 16 | (uint32_t)(d[(o)+3]) << 24)
-#define bmpRead16(d,o) (d[o] | (uint16_t)(d[(o)+1]) << 8)
+#define bmpRead32(d, o) (d[o] | (uint16_t)(d[(o) + 1]) << 8 | (uint32_t)(d[(o) + 2]) << 16 | (uint32_t)(d[(o) + 3]) << 24)
+#define bmpRead16(d, o) (d[o] | (uint16_t)(d[(o) + 1]) << 8)
 
-#define bmpColor8(c)       (((uint16_t)(((uint8_t*)(c))[0] & 0xE0) << 8) | ((uint16_t)(((uint8_t*)(c))[0] & 0x1C) << 6) | ((((uint8_t*)(c))[0] & 0x3) << 3))
-#define bmpColor16(c)      ((((uint8_t*)(c))[0] | ((uint16_t)((uint8_t*)(c))[1]) << 8))
-#define bmpColor24(c)      (((uint16_t)(((uint8_t*)(c))[2] & 0xF8) << 8) | ((uint16_t)(((uint8_t*)(c))[1] & 0xFC) << 3) | ((((uint8_t*)(c))[0] & 0xF8) >> 3))
-#define bmpColor32(c)      (((uint16_t)(((uint8_t*)(c))[3] & 0xF8) << 8) | ((uint16_t)(((uint8_t*)(c))[2] & 0xFC) << 3) | ((((uint8_t*)(c))[1] & 0xF8) >> 3))
+#define bmpColor8(c) (((uint16_t)(((uint8_t *)(c))[0] & 0xE0) << 8) | ((uint16_t)(((uint8_t *)(c))[0] & 0x1C) << 6) | ((((uint8_t *)(c))[0] & 0x3) << 3))
+#define bmpColor16(c) ((((uint8_t *)(c))[0] | ((uint16_t)((uint8_t *)(c))[1]) << 8))
+#define bmpColor24(c) (((uint16_t)(((uint8_t *)(c))[2] & 0xF8) << 8) | ((uint16_t)(((uint8_t *)(c))[1] & 0xFC) << 3) | ((((uint8_t *)(c))[0] & 0xF8) >> 3))
+#define bmpColor32(c) (((uint16_t)(((uint8_t *)(c))[3] & 0xF8) << 8) | ((uint16_t)(((uint8_t *)(c))[2] & 0xFC) << 3) | ((((uint8_t *)(c))[1] & 0xF8) >> 3))
 
-void WROVER_KIT_LCD::bmpSkipPixels(fs::File &file, uint8_t bitsPerPixel, size_t len){
+void WROVER_KIT_LCD::bmpSkipPixels(fs::File &file, uint8_t bitsPerPixel, size_t len)
+{
     size_t bytesToSkip = (len * bitsPerPixel) / 8;
     file.seek(bytesToSkip, SeekCur);
 }
 
-void WROVER_KIT_LCD::bmpAddPixels(fs::File &file, uint8_t bitsPerPixel, size_t len){
+void WROVER_KIT_LCD::bmpAddPixels(fs::File &file, uint8_t bitsPerPixel, size_t len)
+{
     size_t bytesPerTransaction = bitsPerPixel * 4;
     uint8_t transBuf[bytesPerTransaction];
     uint16_t pixBuf[32];
 
-    uint8_t * tBuf;
+    uint8_t *tBuf;
     uint8_t pixIndex = 0;
     size_t wIndex = 0, pixNow, bytesNow;
 
-    while(wIndex < len){
+    while (wIndex < len)
+    {
         pixNow = len - wIndex;
-        if(pixNow > 32){
+        if (pixNow > 32)
+        {
             pixNow = 32;
         }
         bytesNow = (pixNow * bitsPerPixel) / 8;
         file.read(transBuf, bytesNow);
         tBuf = transBuf;
 
-        for(pixIndex=0; pixIndex < pixNow; pixIndex++){
-            if(bitsPerPixel == 32){
+        for (pixIndex = 0; pixIndex < pixNow; pixIndex++)
+        {
+            if (bitsPerPixel == 32)
+            {
                 pixBuf[pixIndex] = (bmpColor32(tBuf));
-                tBuf+=4;
-            } else if(bitsPerPixel == 24){
+                tBuf += 4;
+            }
+            else if (bitsPerPixel == 24)
+            {
                 pixBuf[pixIndex] = (bmpColor24(tBuf));
-                tBuf+=3;
-            } else if(bitsPerPixel == 16){
+                tBuf += 3;
+            }
+            else if (bitsPerPixel == 16)
+            {
                 pixBuf[pixIndex] = (bmpColor16(tBuf));
-                tBuf+=2;
-            } else if(bitsPerPixel == 8){
+                tBuf += 2;
+            }
+            else if (bitsPerPixel == 8)
+            {
                 pixBuf[pixIndex] = (bmpColor8(tBuf));
-                tBuf+=1;
-            } else if(bitsPerPixel == 4){
+                tBuf += 1;
+            }
+            else if (bitsPerPixel == 4)
+            {
                 uint16_t g = tBuf[0] & 0xF;
-                if(pixIndex & 1){
-                    tBuf+=1;
-                } else {
+                if (pixIndex & 1)
+                {
+                    tBuf += 1;
+                }
+                else
+                {
                     g = tBuf[0] >> 4;
                 }
                 pixBuf[pixIndex] = ((g << 12) | (g << 7) | (g << 1));
@@ -432,34 +546,41 @@ void WROVER_KIT_LCD::bmpAddPixels(fs::File &file, uint8_t bitsPerPixel, size_t l
     }
 }
 
-void WROVER_KIT_LCD::drawBmpFile(fs::FS &fs, const char * path, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY){
-    if((x + maxWidth) > width() || (y + maxHeight) > height()){
+void WROVER_KIT_LCD::drawBmpFile(fs::FS &fs, const char *path, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY)
+{
+    if ((x + maxWidth) > width() || (y + maxHeight) > height())
+    {
         log_e("Bad dimensions given");
         return;
     }
 
-    if(!maxWidth){
+    if (!maxWidth)
+    {
         maxWidth = width() - x;
     }
-    if(!maxHeight){
+    if (!maxHeight)
+    {
         maxHeight = height() - y;
     }
 
     File file = fs.open(path);
-    if(!file){
+    if (!file)
+    {
         log_e("Failed to open file for reading");
         return;
     }
     size_t headerLen = 0x22;
     size_t fileSize = file.size();
     uint8_t headerBuf[headerLen];
-    if(fileSize < headerLen || file.read(headerBuf, headerLen) < headerLen){
+    if (fileSize < headerLen || file.read(headerBuf, headerLen) < headerLen)
+    {
         log_e("Failed to read the file's header");
         file.close();
         return;
     }
 
-    if(headerBuf[0] != 'B' || headerBuf[1] != 'M'){
+    if (headerBuf[0] != 'B' || headerBuf[1] != 'M')
+    {
         log_e("Wrong file format");
         file.close();
         return;
@@ -474,7 +595,8 @@ void WROVER_KIT_LCD::drawBmpFile(fs::FS &fs, const char * path, uint16_t x, uint
     size_t bmpWidth = abs(bmpWidthI);
     size_t bmpHeight = abs(bmpHeightI);
 
-    if(offX >= bmpWidth || offY >= bmpHeight){
+    if (offX >= bmpWidth || offY >= bmpHeight)
+    {
         log_e("Offset Outside of bitmap size");
         file.close();
         return;
@@ -482,27 +604,34 @@ void WROVER_KIT_LCD::drawBmpFile(fs::FS &fs, const char * path, uint16_t x, uint
 
     size_t bmpMaxWidth = bmpWidth - offX;
     size_t bmpMaxHeight = bmpHeight - offY;
-    size_t outWidth = (bmpMaxWidth > maxWidth)?maxWidth:bmpMaxWidth;
-    size_t outHeight = (bmpMaxHeight > maxHeight)?maxHeight:bmpMaxHeight;
+    size_t outWidth = (bmpMaxWidth > maxWidth) ? maxWidth : bmpMaxWidth;
+    size_t outHeight = (bmpMaxHeight > maxHeight) ? maxHeight : bmpMaxHeight;
     size_t ovfWidth = bmpMaxWidth - outWidth;
     size_t ovfHeight = bmpMaxHeight - outHeight;
 
     file.seek(dataOffset);
     startBitmap(x, y, outWidth, outHeight);
 
-    if(ovfHeight){
+    if (ovfHeight)
+    {
         bmpSkipPixels(file, bitsPerPixel, ovfHeight * bmpWidth);
     }
-    if(!offX && !ovfWidth){
+    if (!offX && !ovfWidth)
+    {
         bmpAddPixels(file, bitsPerPixel, outWidth * outHeight);
-    } else {
+    }
+    else
+    {
         size_t ih;
-        for(ih=0;ih<outHeight;ih++){
-            if(offX){
+        for (ih = 0; ih < outHeight; ih++)
+        {
+            if (offX)
+            {
                 bmpSkipPixels(file, bitsPerPixel, offX);
             }
             bmpAddPixels(file, bitsPerPixel, outWidth);
-            if(ovfWidth){
+            if (ovfWidth)
+            {
                 bmpSkipPixels(file, bitsPerPixel, ovfWidth);
             }
         }
@@ -518,10 +647,10 @@ void WROVER_KIT_LCD::drawBmpFile(fs::FS &fs, const char * path, uint16_t x, uint
 
 #include "rom/tjpgd.h"
 
-#define jpgColor(c) (((uint16_t)(((uint8_t*)(c))[0] & 0xF8) << 8) | ((uint16_t)(((uint8_t*)(c))[1] & 0xFC) << 3) | ((((uint8_t*)(c))[2] & 0xF8) >> 3))
+#define jpgColor(c) (((uint16_t)(((uint8_t *)(c))[0] & 0xF8) << 8) | ((uint16_t)(((uint8_t *)(c))[1] & 0xFC) << 3) | ((((uint8_t *)(c))[2] & 0xF8) >> 3))
 
 #if ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_ERROR
-const char * jd_errors[] = {
+const char *jd_errors[] = {
     "Succeeded",
     "Interrupted by output function",
     "Device error or wrong termination of input stream",
@@ -530,48 +659,55 @@ const char * jd_errors[] = {
     "Parameter error",
     "Data format error",
     "Right format but not supported",
-    "Not supported JPEG standard"
-};
+    "Not supported JPEG standard"};
 #endif
 
-typedef struct {
-        uint16_t x;
-        uint16_t y;
-        uint16_t maxWidth;
-        uint16_t maxHeight;
-        uint16_t offX;
-        uint16_t offY;
-        jpeg_div_t scale;
-        const void * src;
-        size_t len;
-        size_t index;
-        WROVER_KIT_LCD * tft;
-        uint16_t outWidth;
-        uint16_t outHeight;
+typedef struct
+{
+    uint16_t x;
+    uint16_t y;
+    uint16_t maxWidth;
+    uint16_t maxHeight;
+    uint16_t offX;
+    uint16_t offY;
+    jpeg_div_t scale;
+    const void *src;
+    size_t len;
+    size_t index;
+    WROVER_KIT_LCD *tft;
+    uint16_t outWidth;
+    uint16_t outHeight;
 } jpg_file_decoder_t;
 
-static uint32_t jpgReadFile(JDEC *decoder, uint8_t *buf, uint32_t len){
-    jpg_file_decoder_t * jpeg = (jpg_file_decoder_t *)decoder->device;
-    File * file = (File *)jpeg->src;
-    if(buf){
+static uint32_t jpgReadFile(JDEC *decoder, uint8_t *buf, uint32_t len)
+{
+    jpg_file_decoder_t *jpeg = (jpg_file_decoder_t *)decoder->device;
+    File *file = (File *)jpeg->src;
+    if (buf)
+    {
         return file->read(buf, len);
-    } else {
+    }
+    else
+    {
         file->seek(len, SeekCur);
     }
     return len;
 }
 
-static uint32_t jpgRead(JDEC *decoder, uint8_t *buf, uint32_t len){
-    jpg_file_decoder_t * jpeg = (jpg_file_decoder_t *)decoder->device;
-    if(buf){
+static uint32_t jpgRead(JDEC *decoder, uint8_t *buf, uint32_t len)
+{
+    jpg_file_decoder_t *jpeg = (jpg_file_decoder_t *)decoder->device;
+    if (buf)
+    {
         memcpy(buf, (const uint8_t *)jpeg->src + jpeg->index, len);
     }
     jpeg->index += len;
     return len;
 }
 
-static uint32_t jpgWrite(JDEC *decoder, void *bitmap, JRECT *rect){
-    jpg_file_decoder_t * jpeg = (jpg_file_decoder_t *)decoder->device;
+static uint32_t jpgWrite(JDEC *decoder, void *bitmap, JRECT *rect)
+{
+    jpg_file_decoder_t *jpeg = (jpg_file_decoder_t *)decoder->device;
     uint16_t x = rect->left;
     uint16_t y = rect->top;
     uint16_t w = rect->right + 1 - x;
@@ -579,32 +715,40 @@ static uint32_t jpgWrite(JDEC *decoder, void *bitmap, JRECT *rect){
     uint16_t oL = 0, oR = 0;
     uint8_t *data = (uint8_t *)bitmap;
 
-    if(rect->right < jpeg->offX){
+    if (rect->right < jpeg->offX)
+    {
         return 1;
     }
-    if(rect->left >= (jpeg->offX + jpeg->outWidth)){
+    if (rect->left >= (jpeg->offX + jpeg->outWidth))
+    {
         return 1;
     }
-    if(rect->bottom < jpeg->offY){
+    if (rect->bottom < jpeg->offY)
+    {
         return 1;
     }
-    if(rect->top >= (jpeg->offY + jpeg->outHeight)){
+    if (rect->top >= (jpeg->offY + jpeg->outHeight))
+    {
         return 1;
     }
-    if(rect->top < jpeg->offY){
+    if (rect->top < jpeg->offY)
+    {
         uint16_t linesToSkip = jpeg->offY - rect->top;
         data += linesToSkip * w * 3;
         h -= linesToSkip;
         y += linesToSkip;
     }
-    if(rect->bottom >= (jpeg->offY + jpeg->outHeight)){
+    if (rect->bottom >= (jpeg->offY + jpeg->outHeight))
+    {
         uint16_t linesToSkip = (rect->bottom + 1) - (jpeg->offY + jpeg->outHeight);
         h -= linesToSkip;
     }
-    if(rect->left < jpeg->offX){
+    if (rect->left < jpeg->offX)
+    {
         oL = jpeg->offX - rect->left;
     }
-    if(rect->right >= (jpeg->offX + jpeg->outWidth)){
+    if (rect->right >= (jpeg->offX + jpeg->outWidth))
+    {
         oR = (rect->right + 1) - (jpeg->offX + jpeg->outWidth);
     }
 
@@ -615,32 +759,38 @@ static uint32_t jpgWrite(JDEC *decoder, void *bitmap, JRECT *rect){
     jpeg->tft->startWrite();
     jpeg->tft->setAddrWindow(x - jpeg->offX + jpeg->x + oL, y - jpeg->offY + jpeg->y, w - (oL + oR), h);
 
-    while(h--){
+    while (h--)
+    {
         data += 3 * oL;
         line = w - (oL + oR);
-        while(line--){
+        while (line--)
+        {
             pixBuf[pixIndex++] = jpgColor(data);
             data += 3;
-            if(pixIndex == 32){
+            if (pixIndex == 32)
+            {
                 jpeg->tft->writePixels(pixBuf, WROVER_MAX_PIXELS_AT_ONCE);
                 pixIndex = 0;
             }
         }
         data += 3 * oR;
     }
-    if(pixIndex){
+    if (pixIndex)
+    {
         jpeg->tft->writePixels(pixBuf, pixIndex);
     }
     jpeg->tft->endWrite();
     return 1;
 }
 
-static bool jpgDecode(jpg_file_decoder_t * jpeg, uint32_t(* reader)(JDEC*,uint8_t *, uint32_t)){
+static bool jpgDecode(jpg_file_decoder_t *jpeg, uint32_t (*reader)(JDEC *, uint8_t *, uint32_t))
+{
     static uint8_t work[3100];
     JDEC decoder;
 
     JRESULT jres = jd_prepare(&decoder, reader, work, 3100, jpeg);
-    if(jres != JDR_OK){
+    if (jres != JDR_OK)
+    {
         log_e("jd_prepare failed! %s", jd_errors[jres]);
         return false;
     }
@@ -648,7 +798,8 @@ static bool jpgDecode(jpg_file_decoder_t * jpeg, uint32_t(* reader)(JDEC*,uint8_
     uint16_t jpgWidth = decoder.width / (1 << (uint8_t)(jpeg->scale));
     uint16_t jpgHeight = decoder.height / (1 << (uint8_t)(jpeg->scale));
 
-    if(jpeg->offX >= jpgWidth || jpeg->offY >= jpgHeight){
+    if (jpeg->offX >= jpgWidth || jpeg->offY >= jpgHeight)
+    {
         log_e("Offset Outside of JPEG size");
         return false;
     }
@@ -656,11 +807,12 @@ static bool jpgDecode(jpg_file_decoder_t * jpeg, uint32_t(* reader)(JDEC*,uint8_
     size_t jpgMaxWidth = jpgWidth - jpeg->offX;
     size_t jpgMaxHeight = jpgHeight - jpeg->offY;
 
-    jpeg->outWidth = (jpgMaxWidth > jpeg->maxWidth)?jpeg->maxWidth:jpgMaxWidth;
-    jpeg->outHeight = (jpgMaxHeight > jpeg->maxHeight)?jpeg->maxHeight:jpgMaxHeight;
+    jpeg->outWidth = (jpgMaxWidth > jpeg->maxWidth) ? jpeg->maxWidth : jpgMaxWidth;
+    jpeg->outHeight = (jpgMaxHeight > jpeg->maxHeight) ? jpeg->maxHeight : jpgMaxHeight;
 
     jres = jd_decomp(&decoder, jpgWrite, (uint8_t)jpeg->scale);
-    if(jres != JDR_OK){
+    if (jres != JDR_OK)
+    {
         log_e("jd_decomp failed! %s", jd_errors[jres]);
         return false;
     }
@@ -668,18 +820,22 @@ static bool jpgDecode(jpg_file_decoder_t * jpeg, uint32_t(* reader)(JDEC*,uint8_
     return true;
 }
 
-void WROVER_KIT_LCD::drawJpg(const uint8_t * jpg_data, size_t jpg_len, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY, jpeg_div_t scale){
-    if((x + maxWidth) > width() || (y + maxHeight) > height()){
+void WROVER_KIT_LCD::drawJpg(const uint8_t *jpg_data, size_t jpg_len, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY, jpeg_div_t scale)
+{
+    if ((x + maxWidth) > width() || (y + maxHeight) > height())
+    {
         log_e("Bad dimensions given");
         return;
     }
 
     jpg_file_decoder_t jpeg;
 
-    if(!maxWidth){
+    if (!maxWidth)
+    {
         maxWidth = width() - x;
     }
-    if(!maxHeight){
+    if (!maxHeight)
+    {
         maxHeight = height() - y;
     }
 
@@ -698,24 +854,29 @@ void WROVER_KIT_LCD::drawJpg(const uint8_t * jpg_data, size_t jpg_len, uint16_t 
     jpgDecode(&jpeg, jpgRead);
 }
 
-void WROVER_KIT_LCD::drawJpgFile(fs::FS &fs, const char * path, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY, jpeg_div_t scale){
-    if((x + maxWidth) > width() || (y + maxHeight) > height()){
+void WROVER_KIT_LCD::drawJpgFile(fs::FS &fs, const char *path, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY, jpeg_div_t scale)
+{
+    if ((x + maxWidth) > width() || (y + maxHeight) > height())
+    {
         log_e("Bad dimensions given");
         return;
     }
 
     File file = fs.open(path);
-    if(!file){
+    if (!file)
+    {
         log_e("Failed to open file for reading");
         return;
     }
 
     jpg_file_decoder_t jpeg;
 
-    if(!maxWidth){
+    if (!maxWidth)
+    {
         maxWidth = width() - x;
     }
-    if(!maxHeight){
+    if (!maxHeight)
+    {
         maxHeight = height() - y;
     }
 

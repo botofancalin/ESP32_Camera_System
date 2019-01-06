@@ -4,7 +4,7 @@
 #include <HTTPClient.h>
 
 /*Uncomment the following line to get the read and display timings*/
-//#define TIMINGS
+#define TIMINGS
 
 //Objects
 WROVER_KIT_LCD tft;
@@ -38,7 +38,9 @@ void setup()
 {
   Serial.begin(115200);
   tft.begin();
+  #ifdef MYDEV
   tft.setRotation(1);
+  #endif
   tft.fillScreen(0);
   reconnect();
 }

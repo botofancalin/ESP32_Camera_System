@@ -14,8 +14,13 @@
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 
+#ifdef M5STACK
+#define WROVER_WIDTH       320
+#define WROVER_HEIGHT      240
+#else
 #define WROVER_WIDTH       240
 #define WROVER_HEIGHT      320
+#endif
 
 #define WROVER_NOP         0x00
 #define WROVER_SWRESET     0x01 // Software Reset
