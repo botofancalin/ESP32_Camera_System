@@ -4,7 +4,7 @@
 #include <HTTPClient.h>
 
 /*Uncomment the following line to get the read and display timings*/
-#define TIMINGS
+//#define TIMINGS
 
 //Objects
 WROVER_KIT_LCD tft;
