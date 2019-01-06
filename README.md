@@ -3,11 +3,11 @@ WiFi Video Streaming from ESP32 Camera to ESP32 TFT
 
 The projects can be compiled using PlatformIO
 
-##ESP32 Camera Stream Viewer
+## ESP32 Camera Stream Viewer
 The reciever software can be compiled for M5Stack, odroidGO, Wrover Kit or any other ESP32 device with ILI9341 TFT on it.
 The compile variant can be set from ESP32_Camera_Reciever/platformio.ini (ex. build_flags = -DODROID_GO)
 
-##ESP32 Camera
+## ESP32 Camera
 The camera pinout is set for M5Stack camera
 If you use a different camera module, adapt the camera data pins on main.cpp for your camera.
 
