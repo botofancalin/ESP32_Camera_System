@@ -1,7 +1,7 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 
-/*uncomment the following line to activate the AP mode*/
+/*comment the following line to activate the DTA mode*/
 #define AP
 
 #ifdef AP
