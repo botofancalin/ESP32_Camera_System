@@ -9,6 +9,8 @@ The compile variant can be set from ESP32_Camera_Reciever/platformio.ini (ex. bu
 
 ## ESP32 Camera
 The camera pinout is set for M5Stack camera
+The system support OV2640 and OV7725 camera models. 
+The camera model is detected automatically.
 If you use a different camera module, adapt the camera data pins on main.cpp for your camera.
 
 The camera stream can be accessed from PC web browser too. 
