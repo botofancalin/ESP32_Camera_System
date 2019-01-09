@@ -39,7 +39,7 @@ void reconnect()
   while (WiFi.status() != WL_CONNECTED)
   {
 #ifndef USE_DMA
-    tft.print(".");
+    tft.print("Connecting");
 #endif
     delay(1000);
   }
@@ -109,13 +109,17 @@ void setup()
   printf("SPI: Changed speed to %u\r\n", spi_lobo_get_speed(spi));
 
   TFT_setGammaCurve(DEFAULT_GAMMA_CURVE);
+  #ifdef ODROID_GO
+  TFT_setRotation(LANDSCAPE_FLIP);
+  #else
   TFT_setRotation(LANDSCAPE);
+  #endif
   TFT_setFont(DEFAULT_FONT, NULL);
   TFT_resetclipwin();
 #else
   tft.begin();
   tft.fillScreen(0);
-#ifdef MYDEV
+#if defined MYDEV
   tft.setRotation(1);
 #endif
 #endif

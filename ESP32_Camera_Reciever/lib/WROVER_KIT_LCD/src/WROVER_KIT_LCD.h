@@ -14,7 +14,7 @@
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 
-#ifdef M5STACK
+#if defined M5STACK || ODROID_GO
 #define WROVER_WIDTH       320
 #define WROVER_HEIGHT      240
 #else
