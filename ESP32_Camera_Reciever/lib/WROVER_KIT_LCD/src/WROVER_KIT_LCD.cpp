@@ -100,8 +100,10 @@ const uint8_t ili9341_init_data[] = {
     0xC5, 2, 0x3e, 0x28,
     0xC7, 1, 0x86,
     0x36, 1,
-#ifdef M5STACK
+#if defined M5STACK
     0x08,
+#elif defined ODROID_GO
+    0xE8,
 #else
     0x48,
 #endif
