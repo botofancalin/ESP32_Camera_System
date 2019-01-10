@@ -71,7 +71,7 @@ void setup()
   else
   {
     config.frame_size = FRAMESIZE_QVGA;
-    config.jpeg_quality = 15;
+    config.jpeg_quality = 12;
     config.fb_count = 2;
   }
 
@@ -86,6 +86,8 @@ void setup()
   //drop down frame size for higher initial frame rate
   sensor_t *s = esp_camera_sensor_get();
   s->set_framesize(s, FRAMESIZE_QVGA);
+  s->set_vflip(s, 1);
+  s->set_hmirror(s, 1);
 
 #ifdef AP
   WiFi.softAP(ssid, password);
@@ -104,15 +106,15 @@ void setup()
   startCameraServer();
 
   Serial.print("Camera Ready! Use 'http://");
-  #ifdef AP
+#ifdef AP
   Serial.print(WiFi.softAPIP());
-  #else
+#else
   Serial.print(WiFi.localIP());
-  #endif
+#endif
   Serial.println("' to connect");
 }
 
 void loop()
 {
-  delay(1);
+  delay(10000);
 }
