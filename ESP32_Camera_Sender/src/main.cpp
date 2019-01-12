@@ -1,7 +1,7 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 
-/*comment the following line to activate the DTA mode*/
+/*comment the following line to activate the STA mode*/
 #define AP
 
 #ifdef AP
@@ -66,12 +66,12 @@ void setup()
   {
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 10;
-    config.fb_count = 1;
+    config.fb_count = 2;
   }
   else
   {
     config.frame_size = FRAMESIZE_QVGA;
-    config.jpeg_quality = 12;
+    config.jpeg_quality = 15;
     config.fb_count = 2;
   }
 
