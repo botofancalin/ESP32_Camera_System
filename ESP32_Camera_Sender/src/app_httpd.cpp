@@ -248,8 +248,10 @@ static esp_err_t capture_handler(httpd_req_t *req){
             fb_len = jchunk.len;
         }
         esp_camera_fb_return(fb);
+        #ifdef IMG_DEBUG
         int64_t fr_end = esp_timer_get_time();
         Serial.printf("JPG: %uB %ums\n", (uint32_t)(fb_len), (uint32_t)((fr_end - fr_start)/1000));
+        #endif
         return res;
     }
 
@@ -432,6 +434,7 @@ static esp_err_t stream_handler(httpd_req_t *req){
         last_frame = fr_end;
         frame_time /= 1000;
         uint32_t avg_frame_time = ra_filter_run(&ra_filter, frame_time);
+        #ifdef IMG_DEBUG
         Serial.printf("MJPG: %uB %ums (%.1ffps), AVG: %ums (%.1ffps), %u+%u+%u+%u=%u %s%d\n",
             (uint32_t)(_jpg_buf_len),
             (uint32_t)frame_time, 1000.0 / (uint32_t)frame_time,
@@ -439,6 +442,7 @@ static esp_err_t stream_handler(httpd_req_t *req){
             (uint32_t)ready_time, (uint32_t)face_time, (uint32_t)recognize_time, (uint32_t)encode_time, (uint32_t)process_time,
             (detected)?"DETECTED ":"", face_id
         );
+        #endif
     }
 
     last_frame = 0;

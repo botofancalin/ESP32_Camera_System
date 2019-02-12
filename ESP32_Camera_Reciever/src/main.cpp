@@ -1,5 +1,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_heap_caps.h"
 
 #ifdef USE_DMA
 extern "C"
@@ -17,18 +20,45 @@ WROVER_KIT_LCD tft;
 /*Uncomment the following line to get the read and display timings*/
 //#define TIMINGS
 
-HTTPClient http;
-
 //Variables
 const char *ssid = "M5Cam";
 const char *password = "";
 String url = "http://192.168.4.1/capture";
-int httpCode, len;
+int httpCode;
+
+typedef struct Frame
+{
+  uint8_t *buff;
+  uint32_t len;
+} xFrame;
+
+//handles
+QueueHandle_t xQueue;
+const uint8_t queueSize = 3;
 
 //Variables for measurements
 #ifdef TIMINGS
 int a, b, d;
 #endif
+
+HTTPClient http;
+
+/* Display Task */
+void displayTask(void *pvParameter)
+{
+  while (1)
+  {
+    xFrame *rfr;
+    xQueueReceive(xQueue, (void *)&rfr, portMAX_DELAY);
+#ifdef USE_DMA
+    TFT_jpg_image(CENTER, CENTER, 0, NULL, rfr->buff, rfr->len);
+#else
+    tft.drawJpg(rfr->buff, rfr->len);
+#endif
+    free(rfr->buff);
+    free(rfr);
+  }
+}
 
 void reconnect()
 {
@@ -53,7 +83,7 @@ void setup()
   esp_err_t ret;
 
   tft_disp_type = DISP_TYPE_ILI9341;
-  _width = DEFAULT_TFT_DISPLAY_WIDTH;  // smaller dimension
+  _width = DEFAULT_TFT_DISPLAY_WIDTH;   // smaller dimension
   _height = DEFAULT_TFT_DISPLAY_HEIGHT; // larger dimension
   TFT_PinsInit();
 
@@ -109,11 +139,11 @@ void setup()
   printf("SPI: Changed speed to %u\r\n", spi_lobo_get_speed(spi));
 
   TFT_setGammaCurve(DEFAULT_GAMMA_CURVE);
-  #ifdef ODROID_GO
+#ifdef ODROID_GO
   TFT_setRotation(LANDSCAPE_FLIP);
-  #else
+#else
   TFT_setRotation(LANDSCAPE);
-  #endif
+#endif
   TFT_setFont(DEFAULT_FONT, NULL);
   TFT_resetclipwin();
 #else
@@ -124,6 +154,12 @@ void setup()
 #endif
 #endif
   reconnect();
+
+#ifndef NOTASKS
+  xQueue = xQueueCreate(queueSize, sizeof(xFrame *));
+
+  xTaskCreate(displayTask, "displaytask", 4096, NULL, 1, NULL);
+#endif
 }
 
 void loop()
@@ -157,31 +193,31 @@ void loop()
       }
       else
       {
+        xFrame *fr = (xFrame *)malloc(sizeof(xFrame));
         // get lenght of document (is -1 when Server sends no Content-Length header)
-        len = http.getSize();
-
-        if (len <= 0)
+        fr->len = http.getSize();
+        if (fr->len <= 0)
         {
-          Serial.printf("[HTTP] Unknow content size: %d\n", len);
+          Serial.printf("[HTTP] Unknow content size: %d\n", fr->len);
         }
         else
         {
           // get tcp stream
           WiFiClient *stream = http.getStreamPtr();
           //Allocate buffer for reading
-          uint8_t *buff = (uint8_t *)malloc(len * sizeof(uint8_t));
-          int chunks = len;
+          fr->buff = (uint8_t *)malloc(fr->len * sizeof(uint8_t));
+          int chunks = fr->len;
           // read all data from server
-          while (http.connected() && (chunks > 0 || len == -1))
+          while (http.connected() && (chunks > 0 || fr->len == -1))
           {
             // get available data size
             size_t size = stream->available();
 
             if (size)
             {
-              int chunk_size = ((size > (len * sizeof(uint8_t))) ? (len * sizeof(uint8_t)) : size);
-              int indexer = stream->readBytes(buff, chunk_size);
-              buff += indexer;
+              int chunk_size = ((size > ((fr->len) * sizeof(uint8_t))) ? ((fr->len) * (sizeof(uint8_t))) : size);
+              int indexer = stream->readBytes(fr->buff, chunk_size);
+              fr->buff += indexer;
 
               if (chunks > 0)
               {
@@ -189,22 +225,27 @@ void loop()
               }
             }
           }
-          buff -= len;
+          fr->buff -= fr->len;
 #ifdef TIMINGS
           b = millis();
           Serial.printf("read toke %d\n", (b - a));
           b = millis();
 #endif
+#ifdef NOTASKS
 #ifdef USE_DMA
-          TFT_jpg_image(CENTER, CENTER, 0, NULL, buff, len);
+          TFT_jpg_image(CENTER, CENTER, 0, NULL, fr->buff, fr->len);
 #else
-          tft.drawJpg(buff, len);
+          tft.drawJpg(fr->buff, fr->len);
 #endif
 #ifdef TIMINGS
           d = millis();
           Serial.printf("display toke %d\n", (d - b));
 #endif
-          free(buff);
+          free(fr->buff);
+          free(fr);
+#else
+          xQueueSend(xQueue, &fr, portMAX_DELAY);
+#endif
         }
       }
     }
